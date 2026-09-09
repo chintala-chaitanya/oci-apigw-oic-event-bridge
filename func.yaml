@@ -7,3 +7,13 @@ run_image: fnproject/python:3.11
 entrypoint: /python/bin/fdk /function/func.py handler
 memory: 256
 timeout: 30
+config:
+  API_KEY_SECRET_OCID: "<inbound-api-key-vault-secret-ocid>"
+  CLIENT_ID: "<oic-oauth-client-id>"
+  CLIENT_SECRET_OCID: "<oic-oauth-client-secret-vault-secret-ocid>"
+  TOKEN_URL: "https://<identity-domain-url>/oauth2/v1/token"
+  OIC_SCOPE: "<oic-scope>"
+  AUTHORIZED_SCOPE: "oic.invoke"
+  SECRET_CACHE_TTL_SECONDS: "300"
+  TOKEN_EXPIRY_SKEW_SECONDS: "60"
+  LOG_LEVEL: "INFO"

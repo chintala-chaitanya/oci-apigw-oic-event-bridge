@@ -63,9 +63,29 @@ Allow dynamic-group <function-dynamic-group> to read secret-bundles in compartme
 
 Adapt the policy to your tenancy's least-privilege standards.
 
-## Step 3: Deploy the Function
+## Step 3: Configure the Function
 
-Deploy the project to your OCI Functions application. The Function name comes from `func.yaml`.
+The repository's `func.yaml` contains a `config:` block with placeholders. Before deployment, replace the placeholders in your local working copy with values for the target environment.
+
+Do not put the inbound API key or OAuth client secret in the file. The only Vault-related values in `func.yaml` are secret OCIDs. Do not commit the environment-specific replacements.
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `API_KEY_SECRET_OCID` | Yes | Vault secret OCID containing the API key sent by the event source. |
+| `CLIENT_ID` | Yes | OIC OAuth confidential application client ID. |
+| `CLIENT_SECRET_OCID` | Yes | Vault secret OCID containing the OAuth client secret. |
+| `TOKEN_URL` | Yes | OCI IAM Identity Domain token endpoint. |
+| `OIC_SCOPE` | Yes | Scope granted to the OAuth client for the OIC endpoint. |
+| `AUTHORIZED_SCOPE` | No | Gateway route scope; defaults to `oic.invoke`. |
+| `SECRET_CACHE_TTL_SECONDS` | No | Vault secret cache duration; defaults to `300` seconds. |
+| `TOKEN_EXPIRY_SKEW_SECONDS` | No | Token refresh safety margin; defaults to `60` seconds. |
+| `LOG_LEVEL` | No | Python log level; defaults to `INFO`. |
+
+Do not deploy the sample placeholders. Replace them locally for the target environment and do not commit those replacements; CI/CD may render the same values during an automated deployment.
+
+## Step 4: Deploy the Function
+
+Deploy the configured project to your OCI Functions application. The Function name comes from `func.yaml`.
 
 ```bash
 fn deploy --app <functions-application-name>
@@ -75,29 +95,6 @@ Confirm that the Function appears in the application:
 
 ```bash
 fn list functions <functions-application-name>
-```
-
-## Step 4: Configure the Function
-
-Set the following Function configuration values after deployment:
-
-| Variable | Required | Description |
-| --- | --- | --- |
-| `API_KEY_SECRET_OCID` | Yes | Vault secret OCID containing the API key sent by the event source. |
-| `CLIENT_ID` | Yes | OIC OAuth confidential application client ID. |
-| `CLIENT_SECRET_OCID` | Yes | Vault secret OCID containing the OAuth client secret. |
-| `TOKEN_URL` | Yes | OCI IAM Identity Domain token endpoint. |
-| `OIC_SCOPE` | Yes | Scope granted to the OAuth client for the OIC endpoint. |
-| `AUTHORIZED_SCOPE` | No | API Gateway route scope; defaults to `oic.invoke`. |
-| `SECRET_CACHE_TTL_SECONDS` | No | Vault secret cache duration; defaults to `300` seconds. |
-| `TOKEN_EXPIRY_SKEW_SECONDS` | No | Token refresh safety margin; defaults to `60` seconds. |
-| `LOG_LEVEL` | No | Python log level; defaults to `INFO`. |
-
-Example:
-
-```bash
-fn config function <functions-application-name> oci-apigw-oic-event-bridge API_KEY_SECRET_OCID <api-key-secret-ocid>
-fn config function <functions-application-name> oci-apigw-oic-event-bridge CLIENT_SECRET_OCID <client-secret-ocid>
 ```
 
 
