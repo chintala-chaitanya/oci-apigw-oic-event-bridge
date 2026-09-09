@@ -63,11 +63,11 @@ Allow dynamic-group <function-dynamic-group> to read secret-bundles in compartme
 
 Adapt the policy to your tenancy's least-privilege standards.
 
-## Step 3: Configure the Function
+## Step 3: Review the Function configuration placeholders
 
-The repository's `func.yaml` contains a `config:` block with placeholders. Before deployment, replace the placeholders in your local working copy with values for the target environment.
+The repository's `func.yaml` contains a `config:` block with sample placeholders. Deploy the repository as-is; set the environment-specific values in the OCI Console after deployment.
 
-Do not put the inbound API key or OAuth client secret in the file. The only Vault-related values in `func.yaml` are secret OCIDs. Do not commit the environment-specific replacements.
+Do not put the inbound API key or OAuth client secret in `func.yaml` or in the Function configuration. The Vault-related values are secret OCIDs only.
 
 | Variable | Required | Description |
 | --- | --- | --- |
@@ -81,11 +81,9 @@ Do not put the inbound API key or OAuth client secret in the file. The only Vaul
 | `TOKEN_EXPIRY_SKEW_SECONDS` | No | Token refresh safety margin; defaults to `60` seconds. |
 | `LOG_LEVEL` | No | Python log level; defaults to `INFO`. |
 
-Do not deploy the sample placeholders. Replace them locally for the target environment and do not commit those replacements; CI/CD may render the same values during an automated deployment.
-
 ## Step 4: Deploy the Function
 
-Deploy the configured project to your OCI Functions application. The Function name comes from `func.yaml`.
+Deploy the project with its checked-in placeholder configuration. The Function name comes from `func.yaml`.
 
 ```bash
 fn deploy --app <functions-application-name>
@@ -97,8 +95,19 @@ Confirm that the Function appears in the application:
 fn list functions <functions-application-name>
 ```
 
+## Step 5: Set the Function configuration in the OCI Console
 
-## Step 5: Allow API Gateway to invoke the Function
+After the Function has been deployed:
+
+1. In the OCI Console, open **Developer Services** > **Functions** > **Applications** > _your application_ > `oci-apigw-oic-event-bridge`.
+2. Open **Configuration**, then select **Manage configuration**.
+3. Replace every applicable placeholder with the target environment's value and save the changes. At minimum, set `API_KEY_SECRET_OCID`, `CLIENT_ID`, `CLIENT_SECRET_OCID`, `TOKEN_URL`, and `OIC_SCOPE`.
+
+The two secret values are Vault secret OCIDs, not the raw inbound API key or OAuth client secret. Those sensitive values remain only in OCI Vault.
+
+> Important: a subsequent `fn deploy` can reapply the `config:` values from `func.yaml`, including its placeholders. After every redeployment, review the Function configuration in the Console and restore the environment-specific values if necessary. A future CI/CD workflow can inject them automatically.
+
+## Step 6: Allow API Gateway to invoke the Function
 
 Create a dynamic group for API Gateways in the gateway's compartment. For example:
 
@@ -120,7 +129,7 @@ Allow group <api-gateway-developers-group> to use functions-family in compartmen
 
 See Oracle's [API Gateway policy guidance](https://docs.oracle.com/en-us/iaas/Content/APIGateway/Tasks/apigatewaycreatingpolicies.htm) for policy scoping details.
 
-## Step 6: Configure API Gateway authentication
+## Step 7: Configure API Gateway authentication
 
 Create a deployment with a **multi-argument authorizer** pointing to this Function. Pass the event source's query parameter to the Function:
 
@@ -132,7 +141,7 @@ Configure the route authorization policy to require the `oic.invoke` scope, or t
 
 For an absent or invalid key, the Function returns `active: false`; API Gateway rejects the request. For a valid key, it returns the scope and an OIC access token in private `request.auth` context.
 
-## Step 7: Configure the OIC HTTP backend
+## Step 8: Configure the OIC HTTP backend
 
 Set the OIC REST trigger URL as the API Gateway route's HTTP backend.
 
