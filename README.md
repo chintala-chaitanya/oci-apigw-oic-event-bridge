@@ -45,7 +45,7 @@ You need:
 - An OCI Function dynamic group with permission to read both secret bundles.
 - An API Gateway deployment that can invoke the authorizer Function and reach the OIC endpoint.
 
-For the complete OCI Function build and deployment process, follow Oracle's [Creating and Deploying Functions guide](https://docs.oracle.com/en-us/iaas/Content/Functions/Tasks/functionsuploading.htm).
+For the OCI Function build and deployment prerequisites, open your Functions application's **Application Details** page in the OCI Console. Under **Getting Started**, follow either **Cloud Shell Setup** or **Local Setup**, depending on where you will run the Fn CLI.
 
 ## Step 1: Create Vault secrets
 
