@@ -138,14 +138,18 @@ def handler(ctx: Any, data: io.BytesIO | None = None) -> response.Response:
         if not isinstance(payload, dict):
             raise ValueError("Authorizer payload must be a JSON object")
         supplied_key = _incoming_api_key(payload)
-        expected_key = _required_config("EXPECTED_API_KEY", "API_KEY", "INBOUND_API_KEY")
+        secret_ttl = int(_config("SECRET_CACHE_TTL_SECONDS", default=str(DEFAULT_SECRET_CACHE_TTL_SECONDS)) or "300")
+        secret_reader = _secret_reader(secret_ttl)
+        api_key_secret_ocid = _required_config(
+            "API_KEY_SECRET_OCID", "INBOUND_API_KEY_SECRET_OCID"
+        )
+        expected_key = secret_reader.get_secret(api_key_secret_ocid)
         if not supplied_key or not hmac.compare_digest(supplied_key, expected_key):
             _log("authorization_denied", reason="invalid_api_key", api_key=_mask(supplied_key))
             return _authorizer_response(ctx, False)
 
         _log("authorization_accepted", api_key=_mask(supplied_key))
-        secret_ttl = int(_config("SECRET_CACHE_TTL_SECONDS", default=str(DEFAULT_SECRET_CACHE_TTL_SECONDS)) or "300")
-        token, expires_at = _get_oic_token(_secret_reader(secret_ttl))
+        token, expires_at = _get_oic_token(secret_reader)
         _log("authorization_complete", token_expires_at=expires_at)
         return _authorizer_response(ctx, True, token=token, expires_at=expires_at)
     except (ValueError, json.JSONDecodeError) as exc:

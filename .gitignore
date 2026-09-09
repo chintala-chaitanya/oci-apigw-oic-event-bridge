@@ -1,0 +1,3 @@
+.DS_Store
+Dockerfile[0-9]*
+__pycache__/
