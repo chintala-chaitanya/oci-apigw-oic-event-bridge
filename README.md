@@ -55,7 +55,13 @@ Do not save either plaintext secret in source control, Function configuration, A
 
 ## Step 2: Grant the Function access to Vault
 
-Create or use a dynamic group matching the Function, then grant it access in the compartment containing the Vault secrets:
+Create a dynamic group for the Function. To include Functions in the Functions compartment, use this matching rule:
+
+```text
+ALL {resource.type = 'fnfunc', resource.compartment.id = '<functions-compartment-ocid>'}
+```
+
+Then grant the dynamic group access in the compartment containing the Vault secrets:
 
 ```text
 Allow dynamic-group <function-dynamic-group> to read secret-bundles in compartment <vault-compartment>
@@ -121,11 +127,7 @@ Grant that dynamic group permission to invoke Functions in the Functions compart
 Allow dynamic-group <api-gateway-dynamic-group> to use functions-family in compartment <functions-compartment>
 ```
 
-This policy is required for API Gateway to invoke the custom authorizer. If you configure the authorizer in the OCI Console, the user group performing the setup also needs permission to select the Function:
-
-```text
-Allow group <api-gateway-developers-group> to use functions-family in compartment <functions-compartment>
-```
+This policy is required for API Gateway to invoke the custom authorizer.
 
 See Oracle's [API Gateway policy guidance](https://docs.oracle.com/en-us/iaas/Content/APIGateway/Tasks/apigatewaycreatingpolicies.htm) for policy scoping details.
 
