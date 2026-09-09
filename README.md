@@ -100,9 +100,30 @@ fn config function <functions-application-name> oci-apigw-oic-event-bridge API_K
 fn config function <functions-application-name> oci-apigw-oic-event-bridge CLIENT_SECRET_OCID <client-secret-ocid>
 ```
 
-`EXPECTED_API_KEY`, `API_KEY`, and `INBOUND_API_KEY` are intentionally not supported.
 
-## Step 5: Configure API Gateway authentication
+## Step 5: Allow API Gateway to invoke the Function
+
+Create a dynamic group for API Gateways in the gateway's compartment. For example:
+
+```text
+ALL {resource.type = 'ApiGateway', resource.compartment.id = '<api-gateway-compartment-ocid>'}
+```
+
+Grant that dynamic group permission to invoke Functions in the Functions compartment:
+
+```text
+Allow dynamic-group <api-gateway-dynamic-group> to use functions-family in compartment <functions-compartment>
+```
+
+This policy is required for API Gateway to invoke the custom authorizer. If you configure the authorizer in the OCI Console, the user group performing the setup also needs permission to select the Function:
+
+```text
+Allow group <api-gateway-developers-group> to use functions-family in compartment <functions-compartment>
+```
+
+See Oracle's [API Gateway policy guidance](https://docs.oracle.com/en-us/iaas/Content/APIGateway/Tasks/apigatewaycreatingpolicies.htm) for policy scoping details.
+
+## Step 6: Configure API Gateway authentication
 
 Create a deployment with a **multi-argument authorizer** pointing to this Function. Pass the event source's query parameter to the Function:
 
@@ -114,7 +135,7 @@ Configure the route authorization policy to require the `oic.invoke` scope, or t
 
 For an absent or invalid key, the Function returns `active: false`; API Gateway rejects the request. For a valid key, it returns the scope and an OIC access token in private `request.auth` context.
 
-## Step 6: Configure the OIC HTTP backend
+## Step 7: Configure the OIC HTTP backend
 
 Set the OIC REST trigger URL as the API Gateway route's HTTP backend.
 
